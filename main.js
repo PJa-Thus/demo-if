@@ -1,4 +1,3 @@
-// main.js
 const API_URL = "https://script.google.com/a/macros/gm.ibaraki-ct.ac.jp/s/AKfycbzLtsj5zGCi2BqeKAWSG-5bGZYvsKFMrrcdCMJJzi_jQj1zP6DHnd5IvM86te1QzhTG/exec";
 
 let currentSeat = null;
@@ -10,13 +9,12 @@ async function loadSeatMapFromDrive() {
   try {
     const res = await fetch(API_URL);
     if (!res.ok) throw new Error("読み込み失敗");
-    const data = await res.json();
-    seatMap = data;
-    document.getElementById("result").innerText = "☁ Google Driveからデータを復元しました";
+    seatMap = await res.json();
+    displayMessage("☁ Google Driveからデータを復元しました");
     updateTable();
   } catch (err) {
     console.error(err);
-    document.getElementById("result").innerText = "❌ Driveからの復元に失敗しました";
+    displayMessage("❌ Driveからの復元に失敗しました");
   }
 }
 
@@ -28,47 +26,50 @@ async function saveSeatMapToDrive() {
       body: JSON.stringify(seatMap)
     });
     if (!res.ok) throw new Error("保存失敗");
-    document.getElementById("result").innerText = "✅ Google Driveに保存しました";
+    displayMessage("✅ Google Driveに保存しました");
   } catch (err) {
     console.error(err);
-    document.getElementById("result").innerText = "❌ Google Driveへの保存に失敗しました";
+    displayMessage("❌ Google Driveへの保存に失敗しました");
+  }
+}
+
+async function clearSavedData() {
+  if (confirm("保存データをすべて削除しますか？")) {
+    localStorage.removeItem("seatMap");
+    seatMap = {};
+    await saveSeatMapToDrive();
+    displayMessage("保存されたデータを削除しました。");
+    updateTable();
   }
 }
 
 function completeCurrentSeat() {
   if (currentSeat) {
-    document.getElementById("result").innerText = `座席「${currentSeat}」の登録を完了しました。`;
+    displayMessage(`座席「${currentSeat}」の登録を完了しました。`);
     currentSeat = null;
-    document.getElementById("completeSeatBtn").style.display = "none";
+    const btn = document.getElementById("completeSeatBtn");
+    if (btn) btn.style.display = "none";
   }
 }
 
 function undoLast() {
   if (lastAction) {
     const { seat, person } = lastAction;
-    const people = seatMap[seat];
-    if (people && people[people.length - 1] === person) {
-      people.pop();
-      document.getElementById("result").innerText = `「${person}」の登録を取り消しました。`;
+    const people = seatMap[seat] || [];
+    const idx = people.indexOf(person);
+    if (idx !== -1) {
+      people.splice(idx, 1);
+      displayMessage(`「${person}」の登録を取り消しました。`);
       lastAction = null;
       updateTable();
     }
   }
 }
 
-function clearSavedData() {
-  if (confirm("保存データをすべて削除しますか？")) {
-    localStorage.removeItem("seatMap");
-    seatMap = {};
-    document.getElementById("result").innerText = "保存されたデータを削除しました。";
-    updateTable();
-  }
-}
-
 function downloadCSV() {
   let csv = "座席ID,生徒ID\n";
   for (const [seat, people] of Object.entries(seatMap)) {
-    people.forEach(person => {
+    (people || []).forEach(person => {
       csv += `${seat},${person}\n`;
     });
   }
@@ -84,12 +85,13 @@ function downloadCSV() {
 
 function updateTable() {
   const tbody = document.querySelector('#seatTable tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
   for (const [seat, people] of Object.entries(seatMap)) {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><span class="seat" onclick="removeSeat('${seat}')">${seat} ❌</span></td>
-      <td>${people.map(p =>
+      <td>${(people || []).map(p =>
         `<span class="student" onclick="removeStudent('${seat}', '${p}')">${p} ❌</span>`
       ).join(' ')}</td>
     `;
@@ -99,11 +101,11 @@ function updateTable() {
 }
 
 function removeStudent(seat, person) {
-  const people = seatMap[seat];
+  const people = seatMap[seat] || [];
   const index = people.indexOf(person);
   if (index !== -1) {
     people.splice(index, 1);
-    document.getElementById("result").innerText = `座席「${seat}」から「${person}」を削除しました。`;
+    displayMessage(`座席「${seat}」から「${person}」を削除しました。`);
     updateTable();
   }
 }
@@ -111,56 +113,67 @@ function removeStudent(seat, person) {
 function removeSeat(seat) {
   if (confirm(`座席「${seat}」を削除しますか？（生徒もすべて削除されます）`)) {
     delete seatMap[seat];
-    document.getElementById("result").innerText = `座席「${seat}」を削除しました。`;
+    displayMessage(`座席「${seat}」を削除しました。`);
     updateTable();
   }
 }
 
 function onScanSuccess(decodedText) {
   const now = Date.now();
-  if (now - lastScanTime < 3000) return;
+
+  if (decodedText.startsWith("player") && now - lastScanTime < 3000) return;
   lastScanTime = now;
 
-  if (!decodedText.startsWith("table") && !decodedText.startsWith("player")) {
-    document.getElementById("result").innerText = "QRコードは 'table' または 'player' で始めてください。";
+  if (!/^table\d+/.test(decodedText) && !/^player\d+/.test(decodedText)) {
+    displayMessage("QRコードは 'table数字' または 'player数字' で始めてください。");
     return;
   }
 
   if (decodedText.startsWith("table")) {
     currentSeat = decodedText;
     if (!seatMap[currentSeat]) seatMap[currentSeat] = [];
-    document.getElementById("result").innerText = `座席「${currentSeat}」を読み取りました。最大6人まで登録可能。`;
-    document.getElementById("completeSeatBtn").style.display = "block";
+    displayMessage(`座席「${currentSeat}」を読み取りました。最大6人まで登録可能。`);
+    const btn = document.getElementById("completeSeatBtn");
+    if (btn) btn.style.display = "block";
   } else if (decodedText.startsWith("player")) {
     if (!currentSeat) {
-      document.getElementById("result").innerText = "最初に座席QR（table〜）を読み取ってください。";
+      displayMessage("最初に座席QR（table〜）を読み取ってください。");
       return;
     }
-    const people = seatMap[currentSeat];
+
+    const people = seatMap[currentSeat] || [];
+    seatMap[currentSeat] = people;
+
     if (people.length >= 6) {
-      document.getElementById("result").innerText = `座席「${currentSeat}」は6人までです。`;
+      displayMessage(`座席「${currentSeat}」は6人までです。`);
       completeCurrentSeat();
     } else if (people.includes(decodedText)) {
-      document.getElementById("result").innerText = `「${decodedText}」は既に座席「${currentSeat}」に登録されています。`;
+      displayMessage(`「${decodedText}」は既に座席「${currentSeat}」に登録されています。`);
     } else {
       people.push(decodedText);
       lastAction = { seat: currentSeat, person: decodedText };
-      document.getElementById("result").innerText = `「${decodedText}」を座席「${currentSeat}」に登録（${people.length}/6）`;
+      let msg = `「${decodedText}」を座席「${currentSeat}」に登録（${people.length}/6）`;
       if (people.length >= 6) {
-        document.getElementById("result").innerText += " 上限に達しました。";
+        msg += " 上限に達しました。";
         completeCurrentSeat();
       }
+      displayMessage(msg);
       localStorage.setItem("seatMap", JSON.stringify(seatMap));
       updateTable();
     }
   }
 }
 
+function displayMessage(msg) {
+  const el = document.getElementById("result");
+  if (el) el.innerText = msg;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const savedMap = localStorage.getItem("seatMap");
   if (savedMap) {
     seatMap = JSON.parse(savedMap);
-    document.getElementById("result").innerText = "📦 ローカル保存データを復元しました";
+    displayMessage("📦 ローカル保存データを復元しました");
     updateTable();
   } else {
     loadSeatMapFromDrive();
@@ -177,6 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
     onScanSuccess
   ).catch(err => {
     console.error("カメラ起動エラー:", err);
-    document.getElementById("result").innerText = "カメラ起動に失敗しました: " + err;
+    displayMessage("📷 カメラ起動に失敗しました。設定でカメラ許可を確認してください。");
   });
 });
