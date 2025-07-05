@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycby9fUOsJrjRB5yHoaj84U1WI16Cq0bCj07QrwB37hOJpG2xByC9avvHsJluyEV8G75d/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwB8udHVRt2bfBTdrnltJBXqTBEOYeBRFezS1bYw9MpKB_RXIX4mbyhtprC0dpUomAT/exec";
 
 let currentSeat = null;
 let seatMap = {};
