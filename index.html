@@ -4,18 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QRコードリーダー（削除機能付き）</title>
-  <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
   <h1>QRコードリーダー</h1>
   <p>座席（table〜）→ 生徒（player〜）の順に読み取り。6人まで登録。生徒や座席をクリックで削除。</p>
 
-  <div id="reader-wrapper">
-    <div id="reader"></div>
-  </div>
-
+  <div id="reader-wrapper"><div id="reader"></div></div>
   <div id="result">ここに読み取り結果が表示されます</div>
 
   <div class="button-group">
@@ -37,6 +33,6 @@
     </table>
   </div>
 
-  <script src="main.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
