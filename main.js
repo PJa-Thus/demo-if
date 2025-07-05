@@ -124,8 +124,8 @@ function onScanSuccess(decodedText) {
   if (decodedText.startsWith("player") && now - lastScanTime < 3000) return;
   lastScanTime = now;
 
-  if (!/^table\d+/.test(decodedText) && !/^player\d+/.test(decodedText)) {
-    displayMessage("QRコードは 'table数字' または 'player数字' で始めてください。");
+  if (!/^table/.test(decodedText) && !/^player/.test(decodedText)) {
+    displayMessage("QRコードは 'table〜' または 'player〜' で始めてください。");
     return;
   }
 
