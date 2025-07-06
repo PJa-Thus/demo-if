@@ -1,39 +1,43 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QRコードリーダー（削除機能付き）</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <script src="main.js" type="text/javascript"></script>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>左サイドバー</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+    }
+
+    /* サイドバー */
+    .sidebar {
+      width: 200px;
+      background-color: #333;
+      color: white;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    /* メインコンテンツ */
+    .main {
+      flex-grow: 1;
+      padding: 20px;
+    }
+  </style>
 </head>
 <body>
-  <h1>QRコードリーダー</h1>
-  <p>座席（table〜）→ 生徒（player〜）の順に読み取り。6人まで登録。生徒や座席をクリックで削除。</p>
-
-  <div id="reader-wrapper"><div id="reader"></div></div>
-  <div id="result">ここに読み取り結果が表示されます</div>
-
-  <div class="button-group">
-    <button onclick="downloadCSV()">CSVで保存</button>
-    <button id="completeSeatBtn" onclick="completeCurrentSeat()">この座席の登録を完了</button>
-    <button onclick="undoLast()">最後の追加を取り消す</button>
-    <button onclick="clearSavedData()">🗑 保存データを削除</button>
-    <button onclick="saveSeatMapToDrive()">☁ Google Driveに保存</button>
-    <button onclick="loadSeatMapFromDrive()">☁ Driveから復元</button>
+  <div class="sidebar">
+    <h2>メニュー</h2>
+    <ul>
+      <li><a href="#" style="color:white;">ホーム</a></li>
+      <li><a href="#" style="color:white;">設定</a></li>
+      <li><a href="#" style="color:white;">ログアウト</a></li>
+    </ul>
   </div>
-
-  <div class="footer-area">
-    <h2>現在の座席登録</h2>
-    <table id="seatTable">
-      <thead>
-        <tr><th>座席ID</th><th>生徒ID一覧</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <div class="main">
+    <h1>メインコンテンツ</h1>
+    <p>ここがメインエリアです。</p>
   </div>
-
-  <script src="main.js"></script>
 </body>
 </html>
